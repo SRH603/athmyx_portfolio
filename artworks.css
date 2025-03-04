@@ -1,0 +1,211 @@
+*,::before,::after{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+:root{
+    --duration: 700ms;
+
+    --num-rows: 8;
+    --num-cols: 10;
+    --gallery-width: 200svw;  /* twice the viewport width */
+    --gallery-item-width: calc(var(--gallery-width) / (var(--num-cols) )); /* gallery width divided by number of items so the viewport should show half of the items at any one time */
+    --gallery-item-height: calc(100svh / var(--num-rows)); /* same as width to allow  vertical scroll to scroll the gallery the amount requiered */
+    --body-height: var(--gallery-width);
+}
+
+html{
+    font-family: system-ui;
+    scroll-behavior: smooth;
+    scroll-timeline: --page-scroll block;
+    scroll-timeline: --page-scroll vertical; /* Firefox supports the older "vertical" syntax */
+}
+body {
+    padding: 0;
+    margin: 0;
+    background: #000;
+    color: white;
+    min-height: var(--body-height);
+}
+img{
+    max-width: 100%;
+    display: block;
+    object-fit: cover;
+}
+/* extrenal links */
+/*
+a[target="_blank"] {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+a[target="_blank"]::before {
+  content: "\e89e";
+  font-family: "Material Symbols Outlined";
+  font-size: 1lh;
+}
+*/
+.wrapper{
+    counter-reset: my-counter;
+}
+
+.gallery{
+    position: fixed;
+    top: calc(var(--gallery-item-height) * var(--i));
+    padding: 0;
+    display: grid;
+    width: var(--gallery-width);
+    grid-template-columns: repeat(var(--num-cols), var(--gallery-item-width));
+    grid-template-rows: repeat(var(--num-rows), var(--gallery-item-height));
+    gap: 0;
+
+    animation-name: gallery-slide ;
+    animation-duration: 1ms; /* this is needed for Firefox */
+    animation-timing-function: linear;
+    @supports (display: flex) {
+        animation-timeline: --page-scroll;
+    }
+}
+
+.gallery:nth-child(even){
+    animation-direction: reverse;
+}
+
+@keyframes gallery-slide  {
+    0% { translate: 0 0;}
+    100% { translate: calc(var(--gallery-width) / 2 * -1) 0;}
+}
+
+.gallery > .article {
+    counter-increment: my-counter;
+    position: relative;
+    background: black;
+    overflow: hidden;
+    transition: 300ms ease-in-out;
+    padding: .25rem;
+    color: white;
+}
+.gallery > .article:focus-visible,
+.gallery > .article:hover{
+    /*--img-scale: 1.001;*/
+    --img-opacity: 1; /* not actually used - ie same as inital */
+    --txt-translate-y: 0;
+    --txt-opacity: 1;
+    --txt-delay: 0ms;
+    --mask-opacity: 1;
+    --counter-opacity: 0;
+    --likes-opacity: 1;
+    --likes-y: 0;
+}
+.gallery > .article > div{
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    /*border: 1px solid rgba(124, 123, 123, 0.5);*/
+}
+.gallery > .article > div::before{
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(0 0 0 / .75), transparent 20% 80%, rgba(0 0 0 / .75) 100%);
+    transition: opacity 300ms linear;
+    opacity: var(--mask-opacity, 0);
+}
+
+.wrapper:hover .article:not(:hover){
+    scale: .8;
+}
+.wrapper:has( .article:hover) .article:not(:hover){
+    /*opacity: .25;*/
+}
+
+.gallery > .article img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition-property: scale, opacity;
+    transition-duration: var(--duration);
+    transition-timing-function:  ease-in-out;
+    /*scale: var(--img-scale,1.15);*/
+    opacity: var(--img-opacity,1);
+}
+
+.gallery > .article  p{
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: .5rem 1rem;
+    transition: 300ms ease-in-out;
+    /*transition-delay: var(--txt-delay, 0ms);*/
+    opacity: var(--txt-opacity,0);
+    font-size: .9rem;
+    translate: 0 var(--txt-translate-y, -3rem);
+    color: white;
+    text-decoration: none;
+    background-color: transparent;
+}
+
+
+.gallery > .article  p > span:first-child{
+    display: block;
+}
+.gallery > .article  p > span:last-child{
+    display: none;
+}
+.gallery > .article::after{
+    content: counter(my-counter);
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    color: white;
+    opacity: var(--counter-opacity, .5);
+    transition: opacity 300ms ease-in-out;
+}
+
+.gallery > .article::before{
+    content: '\2665 ' attr(data-likes) '  \01F440 ' attr(data-views);
+    position: absolute;
+    bottom : 1rem;
+    left: 1rem;
+    font-size: .7rem;
+    z-index: 1;
+    transition: translate 300ms ease-in-out,opacity 300ms ease-in-out;
+    translate: 0 var(--likes-y, 2rem);
+    opacity: var(--likes-opacity, 0);
+}
+@media (width < 800px){
+    :root{
+        --num-rows: auto;
+        --num-cols: 2;
+        --gallery-width: 100svw;
+        --body-height: revert;
+    }
+    .gallery{
+        position: static;
+        animation-name: none;
+    }
+    .gallery > .article  p > span:first-child{
+        /*display: none;*/
+    }
+    .gallery > .article  p > span:last-child{
+        /*display: block;*/
+    }
+    .gallery > .article::after{
+        /*display: none;*/
+    }
+}
+
+@media (width < 380px){
+    body{
+        padding-inline:1rem;
+    }
+    .gallery{
+        display: contents;
+    }
+    .gallery > .article::after{
+        display: none;
+    }
+}
